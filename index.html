@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>English Daily Lab</title>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -151,6 +152,25 @@ main { padding-block: 22px 72px; display: grid; gap: 18px; }
 .dots span { height: 6px; border-radius: 3px; background: var(--line); }
 .dots span.on { background: var(--accent); }
 
+.dlg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.dlg-card { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 16px; display: grid; gap: 8px; align-content: start; box-shadow: var(--shadow); color: var(--ink); font: inherit; }
+.dlg-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.dlg-card h3 { margin: 0; font-size: 1.02rem; }
+.dlg-card .done { color: var(--good); font-weight: 600; font-size: 0.85rem; }
+.lines { display: grid; gap: 8px; }
+.line { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 13px; background: var(--surface-2); border: 1px solid transparent; transition: border-color .2s, background .2s; }
+.line.b { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.line.now { border-color: var(--accent); }
+.line .who { font-family: var(--f-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.line .en { font-weight: 500; }
+.line .en.masked { color: var(--muted); font-style: italic; font-weight: 400; }
+.line .tr { color: var(--muted); font-size: 0.9rem; }
+.line .txt { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.line textarea { width: 100%; box-sizing: border-box; }
+.line .result { overflow-wrap: break-word; }
+.line .cue { font-weight: 600; }
+.line .ctl { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.icon-btn { padding: 6px 9px; }
 .result { border-radius: 12px; padding: 11px 13px; background: var(--surface-2); display: grid; gap: 6px; font-size: 0.95rem; }
 .result .score { font-family: var(--f-mono); font-weight: 500; }
 .words { line-height: 1.95; }
@@ -262,6 +282,7 @@ textarea { resize: vertical; min-height: 84px; }
     <a href="#lecon" data-v="lecon">Leçon du jour</a>
     <a href="#revision" data-v="revision">Révision<span class="count" id="tabDue" hidden></span></a>
     <a href="#entrainement" data-v="entrainement">Entraînement</a>
+    <a href="#dialogues" data-v="dialogues">Dialogues</a>
     <a href="#prononciation" data-v="prononciation">Prononciation</a>
     <a href="#niveau" data-v="niveau">Niveau &amp; examens</a>
     <a href="#profil" data-v="profil">Profil</a>
@@ -273,6 +294,7 @@ textarea { resize: vertical; min-height: 84px; }
 
 <script src="data.js"></script>
 <script src="data-general.js"></script>
+<script src="data-dialogues.js"></script>
 <script>
 (() => {
 "use strict";
@@ -341,14 +363,14 @@ const SK = ["vocab", "grammar", "listen", "dict", "pron"];
 const defaultState = () => ({
   v: 2, upd: 0, start: dkey(), profile: null, level: null, levelHist: [], tests: [],
   prefs: { domains: PRO.slice(), genShare: 0.5, daily: 10, engine: "auto", accent: "en-US", rate: 1, audioFirst: true, voiceName: "", lead: 250, primer: true },
-  days: {}, srs: {}, act: {}, sk: { vocab: [0, 0], grammar: [0, 0], listen: [0, 0], dict: [0, 0], pron: [0, 0] }
+  dlg: {}, days: {}, srs: {}, act: {}, sk: { vocab: [0, 0], grammar: [0, 0], listen: [0, 0], dict: [0, 0], pron: [0, 0] }
 });
 let S = defaultState();
 let CUSTOM = [];
 function mergeState(x) {
   const d = defaultState();
   if (!x || typeof x !== "object") return d;
-  const s = { ...d, ...x, prefs: { ...d.prefs, ...(x.prefs || {}) }, sk: { ...d.sk, ...(x.sk || {}) }, days: x.days || {}, srs: x.srs || {}, act: x.act || {}, tests: x.tests || [], levelHist: x.levelHist || [] };
+  const s = { ...d, ...x, prefs: { ...d.prefs, ...(x.prefs || {}) }, sk: { ...d.sk, ...(x.sk || {}) }, days: x.days || {}, srs: x.srs || {}, act: x.act || {}, tests: x.tests || [], levelHist: x.levelHist || [], dlg: x.dlg || {} };
   s.prefs.domains = (s.prefs.domains || []).filter((k) => PRO.includes(k));
   if (x.stats && !x.sk) { // migration v1
     s.sk.dict = [x.stats.dictSum || 0, x.stats.dictN || 0];
@@ -368,53 +390,12 @@ let saveT = null;
 function save() {
   S.upd = Date.now();
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
-  clearTimeout(saveT); saveT = setTimeout(pushRemote, 1500);
 }
-function saveCustom() { try { localStorage.setItem(LS_CUSTOM, JSON.stringify(CUSTOM)); } catch (e) {} pushCustom(); }
+function saveCustom() { try { localStorage.setItem(LS_CUSTOM, JSON.stringify(CUSTOM)); } catch (e) {} }
 function bump(n = 1) { const k = dkey(); S.act[k] = (S.act[k] || 0) + n; }
 function addSkill(sk, ok, n = 1) { const a = S.sk[sk] || [0, 0]; a[0] += ok; a[1] += n; S.sk[sk] = a; }
 const skillPct = (sk) => { const a = S.sk[sk] || [0, 0]; return a[1] ? Math.round(sk === "dict" || sk === "pron" ? a[0] / a[1] : (a[0] / a[1]) * 100) : null; };
 const curLevel = () => S.level || "B1";
-
-/* ================= Claude : voix, dictée, Claude, sauvegarde ================= */
-const CL = { tts: null, dict: null, sample: null, progRef: null, custRef: null, writing: false, again: false, ttsOff: false };
-async function initClaude() {
-  const c = window.claude;
-  if (!c || typeof c.use !== "function") return;
-  c.use("tts").then((t) => { CL.tts = t; render(); }).catch(() => {});
-  c.use("dictation").then((d) => { if (d) { CL.dict = d; wireDictation(d); render(); } }).catch(() => {});
-  c.use("sample").then((s) => { CL.sample = s; render(); }).catch(() => {});
-  try {
-    const [db, user] = await Promise.all([c.use("db"), c.use("user")]);
-    if (!db || !user) return;
-    const uid = await user.id(); if (!uid) return;
-    const col = db.collection("data/users/" + uid);
-    CL.progRef = col.doc("progress"); CL.custRef = col.doc("custom");
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000));
-    const [p, cu] = await Promise.race([Promise.all([CL.progRef.get(), CL.custRef.get()]), timeout]);
-    const remote = p.exists ? p.data() : null;
-    if (remote && remote.state) {
-      const rs = mergeState(remote.state);
-      if ((rs.upd || 0) > (S.upd || 0)) { S = rs; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
-    }
-    const rc = cu.exists ? (cu.data().items || []) : [];
-    let added = false;
-    for (const it of rc) { const n = normalizeCustom(it); if (n && addItem(n, null)) { CUSTOM.push(n); added = true; } }
-    if (added) { try { localStorage.setItem(LS_CUSTOM, JSON.stringify(CUSTOM)); } catch (e) {} }
-    if (!remote || (S.upd || 0) > (remote.state?.upd || 0)) pushRemote();
-    if (CUSTOM.length > rc.length) pushCustom();
-    render();
-  } catch (e) { /* le navigateur garde la progression */ }
-}
-async function pushRemote() {
-  if (!CL.progRef) return;
-  if (CL.writing) { CL.again = true; return; }
-  CL.writing = true;
-  try { await CL.progRef.set({ state: JSON.parse(JSON.stringify(S)) }); } catch (e) {}
-  CL.writing = false;
-  if (CL.again) { CL.again = false; pushRemote(); }
-}
-async function pushCustom() { if (CL.custRef) { try { await CL.custRef.set({ items: CUSTOM.slice(-700) }); } catch (e) {} } }
 
 /* ---------- Voix ---------- */
 const synth = window.speechSynthesis || null;
@@ -429,27 +410,16 @@ function pickVoice() {
   const pool = same.length ? same : voices;
   return pool.find((v) => /natural|neural|google|samantha|daniel|aria|jenny|premium|enhanced/i.test(v.name)) || pool[0];
 }
-const useTts = () => CL.tts && !CL.ttsOff && S.prefs.engine !== "browser";
-const canSpeak = () => useTts() || !!synth;
+const canSpeak = () => !!synth;
 let playingBtn = null;
 function markPlaying(btn, on) { if (playingBtn && playingBtn !== btn) playingBtn.classList.remove("playing"); playingBtn = on ? btn : null; if (btn) btn.classList.toggle("playing", on); }
 function speak(text, slow, btn) {
+  DLG.seq++;
   const rate = slow ? 0.72 : Number(S.prefs.rate) || 1;
   markPlaying(btn, true);
-  if (useTts()) {
-    // Amorce : une courte pause avant la phrase pour que le début ne soit pas coupé.
-    const said = S.prefs.primer ? "… " + text : text;
-    return CL.tts.speak(said, { rate, language: "en" }).catch((e) => {
-      const code = e && e.code;
-      if (code === "not_granted") { CL.ttsOff = true; toast("La lecture audio est désactivée pour cette page (menu Permissions)."); render(); return; }
-      if (code === "stopped" || code === "no_gesture") return;
-      if (code === "busy") { toast("Le micro est en cours d'utilisation."); return; }
-      return browserSpeak(text, rate);
-    }).finally(() => markPlaying(btn, false));
-  }
   return browserSpeak(text, rate).finally(() => markPlaying(btn, false));
 }
-function browserSpeak(text, rate) {
+function browserSpeak(text, rate, opt = {}) {
   return new Promise((res) => {
     if (!synth) { toast("Ce navigateur ne sait pas lire le texte à voix haute."); return res(); }
     synth.cancel();
@@ -458,50 +428,23 @@ function browserSpeak(text, rate) {
     }
     const go = () => {
       const u = new SpeechSynthesisUtterance(text);
-      const v = pickVoice(); if (v) u.voice = v;
-      u.lang = v ? v.lang : S.prefs.accent; u.rate = rate;
+      const v = opt.voice || pickVoice(); if (v) u.voice = v;
+      u.lang = v ? v.lang : S.prefs.accent; u.rate = rate; if (opt.pitch) u.pitch = opt.pitch;
       u.onend = u.onerror = () => res();
       synth.speak(u);
     };
     setTimeout(go, Math.max(60, Number(S.prefs.lead) || 0));
   });
 }
-function stopAudio() { if (CL.tts && playingBtn) { try { CL.tts.stop(); } catch (e) {} } if (synth) synth.cancel(); }
+function stopAudio() { DLG.seq++; if (synth) synth.cancel(); markPlaying(null, false); }
 
 /* ---------- Reconnaissance vocale ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let rec = null;
-const canListen = () => !!CL.dict || !!SR;
-function wireDictation(d) {
-  d.onPartial(({ text }) => { if (rec && rec.onPartial) rec.onPartial(text); });
-  d.onFinal(({ text }) => { if (!rec) return; rec.finals += text; if (rec.onPartial) rec.onPartial(""); clearTimeout(rec.t); rec.t = setTimeout(() => d.stop(), 1400); });
-  d.onState(({ state, reason }) => {
-    if (!rec) return;
-    if (rec.btn) rec.btn.classList.toggle("live", state === "listening" || state === "starting");
-    if (state === "idle") {
-      const r = rec; rec = null;
-      if (reason === "not_granted") toast("Micro refusé. Vous pouvez l'autoriser dans le menu Permissions de la page.");
-      else if (reason === "unavailable") toast("La dictée en anglais n'est pas disponible ici.");
-      else if (reason === "rate_limited") toast("Trop de dictées en même temps, réessayez dans un instant.");
-      r.onDone(r.finals.trim());
-    }
-  });
-}
+const canListen = () => !!SR;
 function startListening(btn, onPartial, onDone) {
-  if (rec) { if (CL.dict) CL.dict.stop(); else if (rec.sr) rec.sr.stop(); return; }
+  if (rec) { if (rec.sr) rec.sr.stop(); return; }
   stopAudio();
-  if (CL.dict) {
-    rec = { finals: "", onPartial, onDone, btn };
-    btn.classList.add("live");
-    CL.dict.start({ language: "en" }).catch((e) => {
-      const c = e && e.code;
-      if (c === "not_granted") toast("Micro refusé. Vous pouvez l'autoriser dans le menu Permissions de la page.");
-      else if (c === "unavailable") toast("La dictée en anglais n'est pas disponible ici.");
-      else if (c && c !== "stopped" && c !== "dismissed") toast("Le micro n'a pas pu démarrer, réessayez.");
-      if (rec && rec.btn === btn && !CL.dict.active()) { btn.classList.remove("live"); const r = rec; rec = null; r.onDone(r.finals.trim()); }
-    });
-    return;
-  }
   if (SR) {
     const sr = new SR();
     sr.lang = S.prefs.accent; sr.interimResults = true; sr.maxAlternatives = 1; sr.continuous = false;
@@ -749,6 +692,69 @@ function finishRun() {
   save();
 }
 
+/* ================= Dialogues ================= */
+const DIALOGS = window.EN_DIALOGUES || [];
+const DLG = { id: null, showT: false, showF: false, ans: {}, role: null, seq: 0 };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const curDlg = () => DIALOGS.find((d) => d.id === DLG.id) || null;
+function dlgVoices() {
+  const a = pickVoice();
+  const acc = S.prefs.accent.toLowerCase();
+  const pool = voices.filter((v) => v !== a);
+  const same = pool.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(acc));
+  const pref = (arr) => arr.find((v) => /natural|neural|online|google|premium|enhanced/i.test(v.name)) || arr[0];
+  const b = pref(same) || pref(pool) || null;
+  return { A: { voice: a, pitch: b ? 1 : 0.85 }, B: { voice: b || a, pitch: b ? 1 : 1.2 } };
+}
+function speakLine(d, i, slow) {
+  const [who, en] = d.lines[i];
+  const rate = slow ? 0.72 : Number(S.prefs.rate) || 1;
+  return browserSpeak(en, rate, dlgVoices()[who]);
+}
+function markLine(i) { app.querySelectorAll(".line").forEach((el) => el.classList.toggle("now", Number(el.dataset.line) === i)); }
+async function playDialogue(slow, from = 0) {
+  const d = curDlg(); if (!d || !canSpeak()) return;
+  stopAudio(); const my = DLG.seq;
+  for (let i = from; i < d.lines.length; i++) {
+    if (my !== DLG.seq) return;
+    markLine(i);
+    await speakLine(d, i, slow);
+    if (my !== DLG.seq) return;
+    await wait(300);
+  }
+  markLine(-1);
+}
+function dlgDone(score) {
+  const d = curDlg(); if (!d) return;
+  const o = S.dlg[d.id] || { best: 0 };
+  S.dlg[d.id] = { best: Math.max(o.best || 0, score), d: dkey() };
+  bump(); save(); updateHeader();
+}
+async function roleAdvance() {
+  const d = curDlg(), r = DLG.role; if (!d || !r) return;
+  stopAudio(); const my = DLG.seq;
+  while (r.i < d.lines.length && d.lines[r.i][0] === "A") {
+    render(); scrollLine(r.i);
+    if (!canSpeak()) { r.i++; continue; }
+    await speakLine(d, r.i);
+    if (my !== DLG.seq || DLG.role !== r) return;
+    await wait(250); r.i++;
+  }
+  if (r.i >= d.lines.length && !r.saved) {
+    r.saved = true;
+    const sc = Object.values(r.res).map((x) => x.score);
+    if (sc.length) dlgDone(Math.round(sc.reduce((a, b) => a + b, 0) / sc.length));
+  }
+  render(); scrollLine(r.i);
+}
+function scrollLine(i) { const el = app.querySelector(`.line[data-line="${i}"]`) || app.querySelector("#roleEnd"); if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+function roleResult(i, text) {
+  const d = curDlg(), r = DLG.role; if (!d || !r) return;
+  const cmp = compare(d.lines[i][1], text);
+  r.res[i] = { score: cmp.score, cmp, got: text };
+  addSkill("pron", cmp.score); bump(); save(); render(); scrollLine(i);
+}
+
 /* ================= Rendu : briques ================= */
 function audioBtns(text, label = "Écouter", big = false) {
   if (!canSpeak()) return "";
@@ -829,6 +835,7 @@ function viewHome() {
       ${task(lW + lE >= tot && tot > 0, "Leçon du jour", `${lW + lE}/${tot} cartes apprises · ${lW} mots, ${lE} expressions`, "#lecon", "Leçon")}
       ${task(due === 0, "Révisions", due ? `${due} carte${due > 1 ? "s" : ""} à revoir aujourd'hui` : "À jour", "#revision", "Réviser")}
       ${task(practicedToday, "Une série d'entraînement", "Écoute, vocabulaire, grammaire ou dictée, à refaire autant que vous voulez", "#entrainement", "S'entraîner")}
+      ${task(Object.values(S.dlg).some((x) => x.d === dkey()), "Un dialogue", "Écouter une conversation sans le texte, répondre, puis jouer un rôle à voix haute", "#dialogues", "Écouter")}
       ${task(S.pronDay === dkey(), "Prononciation", "Shadowing : écouter, répéter, comparer", "#prononciation", "Parler")}
     </div></section>
     <div class="tiles">
@@ -861,8 +868,6 @@ function viewLesson() {
 let lessonTab = "w";
 function moreBlock(t) {
   const name = t === "w" ? "mots" : "expressions";
-  if (CL.sample) return `<div class="panel"><h3>Il manque des ${name} pour aujourd'hui</h3><p class="muted" style="margin:0">La banque intégrée est épuisée pour vos réglages. Claude peut créer de nouvelles cartes de niveau ${esc(curLevel())}-${esc(nextLvl(curLevel()))}, en anglais général et dans votre métier.</p>
-    <div class="actions"><button class="btn primary" data-gen="${t}">${ICON.spark}Générer 10 ${name}</button><span class="muted small" id="genStatus"></span></div></div>`;
   return `<div class="panel"><h3>Banque de ${name} épuisée pour vos réglages</h3><p class="muted" style="margin:0">Ajoutez des domaines dans Profil, ou continuez avec les révisions et l'entraînement.</p></div>`;
 }
 
@@ -972,6 +977,80 @@ function newPron() {
   const useSentence = it.t === "e" || Math.random() < 0.5;
   pron = { it, text: useSentence ? sentence(it) : it.en };
 }
+function viewDialogues() {
+  const d = curDlg();
+  if (!d) {
+    const lvl = curLevel();
+    const order = DIALOGS.slice().sort((a, b) => Math.abs(lvIdx(a.lvl) - lvIdx(lvl)) - Math.abs(lvIdx(b.lvl) - lvIdx(lvl)) || lvIdx(a.lvl) - lvIdx(b.lvl));
+    return `<section class="head"><div><h2>Dialogues</h2><p>De vraies conversations à deux voix, au bureau, sur site et en voyage. Écoutez d'abord sans le texte, répondez aux questions, puis jouez l'un des rôles à voix haute.</p></div></section>
+      ${canSpeak() ? "" : `<div class="notice warn">L'audio n'est pas disponible dans ce navigateur : le texte des dialogues reste lisible.</div>`}
+      <div class="dlg-list">${order.map((x) => {
+        const st = S.dlg[x.id];
+        return `<button class="dlg-card" data-dlg="${esc(x.id)}"><span class="meta"><span class="l"><span class="chip">${esc((DOM[x.dom] || DOM.gen).short)}</span> <span class="chip lv">${esc(x.lvl)}</span></span></span>
+          <h3>${esc(x.title)}</h3><span class="muted small">${esc(x.ctx)}</span>
+          ${st ? `<span class="done">${ICON.check} Fait${st.best ? ` · meilleur score ${st.best} %` : ""}</span>` : `<span class="small muted">${x.lines.length} répliques · ${x.qs.length} questions</span>`}</button>`;
+      }).join("")}</div>`;
+  }
+  const r = DLG.role;
+  const head = `<section class="head"><div><div class="eyebrow"><a href="#dialogues">← Tous les dialogues</a> · ${esc((DOM[d.dom] || DOM.gen).short)} · ${esc(d.lvl)}</div><h2>${esc(d.title)}</h2><p>${esc(d.ctx)}</p></div></section>`;
+  const toggles = `<div class="actions"><label class="switch"><input type="checkbox" id="dlgShowT" ${DLG.showT ? "checked" : ""}> Afficher le texte anglais</label><label class="switch"><input type="checkbox" id="dlgShowF" ${DLG.showF ? "checked" : ""}> Afficher la traduction</label></div>`;
+  const lineHtml = (i, extra = "") => {
+    const [who, en, fr] = d.lines[i];
+    const name = d.names[who === "A" ? 0 : 1];
+    return `<div class="line ${who === "B" ? "b" : ""}" data-line="${i}"><span class="who">${esc(name.split(",")[0])}</span><div class="txt">
+      <span class="en ${DLG.showT ? "" : "masked"}">${DLG.showT ? esc(en) : "Réplique audio (texte masqué)"}</span>
+      ${DLG.showF ? `<span class="tr">${esc(fr)}</span>` : ""}
+      ${canSpeak() ? `<span class="ctl"><button class="btn audio icon-btn" data-dline="${i}" title="Écouter">${ICON.play}</button><button class="btn audio icon-btn" data-dline="${i}" data-slow="1" title="Lentement">${ICON.slow}</button></span>` : ""}${extra}</div></div>`;
+  };
+  if (r) {
+    let body = "";
+    for (let i = 0; i <= Math.min(r.i, d.lines.length - 1); i++) {
+      const [who, en, fr] = d.lines[i];
+      if (who === "A") { body += lineHtml(i); continue; }
+      const res = r.res[i];
+      if (i < r.i) { body += `<div class="line b" data-line="${i}"><span class="who">Vous</span><div class="txt"><span class="en">${esc(en)}</span>${res ? `<span class="small muted">${res.score} % · ${verdict(res.score)}</span>` : `<span class="small muted">Passée</span>`}</div></div>`; continue; }
+      body += `<div class="line b now" data-line="${i}"><span class="who">Vous</span><div class="txt">
+        <span class="small muted">À vous de dire, en anglais :</span><span class="cue">${esc(fr)}</span>
+        ${res ? `<div class="result"><div class="score">${res.score} % · ${verdict(res.score)}</div>${diffHtml(res.cmp)}<div class="small muted">Compris : « ${esc(res.got)} »</div></div>` : ""}
+        <span class="ctl">${canListen() ? `<button class="btn mic primary" data-rolemic="${i}">${ICON.mic}${res ? "Redire" : "Parler"}</button>` : ""}
+          <button class="btn audio" data-dline="${i}">${ICON.play}Modèle</button><button class="btn audio" data-dline="${i}" data-slow="1">${ICON.slow}Lent</button></span>
+        <div class="row" style="display:grid;gap:6px"><textarea id="roleInput" placeholder="${canListen() ? "Ou tapez votre réplique ici" : "Tapez votre réplique ici (le micro marche dans Chrome ou Edge)"}" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        <div class="actions"><button class="btn" data-rolecheck="${i}">Vérifier le texte</button><button class="btn ${res ? "primary" : "ghost"}" data-rolenext="1">${res ? "Réplique suivante" : "Passer"}</button></div></div>
+        <span class="mic-live small muted" id="roleLive"></span></div></div>`;
+    }
+    const cur = d.lines[r.i];
+    if (cur && cur[0] === "A") body += `<div class="actions"><button class="btn" data-rolenext="1">Continuer</button></div>`;
+    let end = "";
+    if (r.i >= d.lines.length) {
+      const sc = Object.values(r.res).map((x) => x.score);
+      const avg = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
+      end = `<div class="panel" id="roleEnd"><h3>Jeu de rôle terminé</h3><p class="muted" style="margin:0">${avg === null ? "Aucune réplique vérifiée cette fois." : `Score moyen : <b>${avg} %</b> sur ${sc.length} réplique${sc.length > 1 ? "s" : ""}.`} Rejouez-le jusqu'à pouvoir le dire sans hésiter : c'est ce qui rend la phrase disponible en réunion.</p>
+        <div class="actions"><button class="btn primary" data-roleplay="1">${ICON.redo}Rejouer le rôle</button><button class="btn" data-roleexit="1">Revenir à l'écoute</button></div></div>`;
+    }
+    return head + `<div class="notice">Vous parlez face à <b>${esc(d.names[0])}</b>. Ses répliques se lancent toutes seules ; à votre tour, la phrase française s'affiche : dites-la en anglais, puis comparez avec le modèle.</div>
+      ${toggles}<div class="actions"><button class="btn ghost" data-roleexit="1">Quitter le jeu de rôle</button></div>
+      <div class="lines">${body}</div>${end}`;
+  }
+  const answered = Object.keys(DLG.ans).length, good = d.qs.filter((q, k) => DLG.ans[k] === q[2]).length;
+  return head + `${canSpeak() ? "" : `<div class="notice warn">Audio indisponible ici : affichez le texte pour lire le dialogue.</div>`}
+    <div class="panel"><h3>1. Écoutez sans lire</h3><p class="muted" style="margin:0">Écoutez une ou deux fois, répondez aux questions, puis seulement affichez le texte pour vérifier ce qui vous a échappé.</p>
+      <div class="actions">${canSpeak() ? `<button class="btn audio big" data-dplay="1">${ICON.play}Tout écouter</button><button class="btn audio" data-dplay="1" data-slow="1">${ICON.slow}Lentement</button><button class="btn ghost" data-dstop="1">Stop</button>` : ""}</div>
+      ${toggles}
+      <div class="lines">${d.lines.map((_, i) => lineHtml(i)).join("")}</div></div>
+    <div class="panel"><h3>2. Avez-vous compris ?</h3>
+      ${d.qs.map((q, k) => {
+        const a = DLG.ans[k];
+        return `<div style="display:grid;gap:8px"><b>${esc(q[0])}</b><div class="choices">${q[1].map((o, j) => {
+          const cls = a === undefined ? "" : j === q[2] ? "right" : j === a ? "wrong" : "";
+          return `<button class="choice ${cls}" data-dq="${k}" data-da="${j}" ${a !== undefined ? "disabled" : ""}>${esc(o)}</button>`;
+        }).join("")}</div></div>`;
+      }).join("")}
+      ${answered === d.qs.length ? `<div class="result"><b class="${good === d.qs.length ? "ok-t" : "ko-t"}">${good}/${d.qs.length} bonnes réponses</b><span class="muted">Réécoutez maintenant avec le texte affiché, puis sans, pour fixer les sons.</span></div><div class="actions"><button class="btn" data-dqreset="1">${ICON.redo}Refaire les questions</button></div>` : ""}
+    </div>
+    <div class="panel"><h3>3. Jouez le rôle</h3><p class="muted" style="margin:0">Vous donnez la réplique à <b>${esc(d.names[0])}</b>. ${canListen() ? "Parlez au micro" : "Tapez vos répliques (le micro fonctionne dans Chrome ou Edge)"} : l'application compare votre phrase au modèle, mot par mot.</p>
+      <div class="actions"><button class="btn primary" data-roleplay="1">${ICON.mic}Commencer le jeu de rôle</button></div></div>`;
+}
+
 function viewPron() {
   if (!pron) newPron();
   const it = pron.it, avg = skillPct("pron");
@@ -1030,13 +1109,13 @@ function viewLevel() {
       <div><span class="n">4</span><span><b>Shadowing</b> : répéter juste après le modèle améliore prononciation et compréhension (Hamada, 2016).</span></div>
       <div><span class="n">5</span><span><b>Niveau i + 1</b> : les leçons visent votre niveau et le suivant, assez difficile pour progresser sans décrocher (Krashen).</span></div>
       <div><span class="n">6</span><span><b>Blocs lexicaux et contexte</b> : expressions entières et phrases de votre métier, comme les natifs les emploient (Nation ; Lewis).</span></div>
+      <div><span class="n">8</span><span><b>Dialogues et jeux de rôle</b> : écouter de vraies conversations avant de lire, puis produire à l'oral dans un scénario. La production force à remarquer ce qui manque (Swain, hypothèse de l'output).</span></div>
       <div><span class="n">7</span><span><b>Entrelacement</b> : séries et révisions mélangent compétences et domaines, ce qui retient mieux que des blocs par thème (Rohrer, 2012).</span></div>
     </div></section>`;
 }
 
 function viewProfile() {
   const p = S.profile || {};
-  const engineOpts = `<option value="auto" ${S.prefs.engine === "auto" ? "selected" : ""}>${CL.tts ? "Voix Claude (naturelle)" : "Automatique"}</option><option value="browser" ${S.prefs.engine === "browser" ? "selected" : ""}>Voix du navigateur</option>`;
   return `<section class="head"><div><h2>Profil &amp; réglages</h2><p>${esc(p.name || "")}${p.job ? ` · ${esc(p.job)}` : ""}</p></div></section>
     <section class="panel form">
       <h3>Profil</h3>
@@ -1053,8 +1132,7 @@ function viewProfile() {
         <span class="small muted">L'anglais général est toujours inclus. Les changements s'appliquent aux prochaines cartes.</span></div>
     </section>
     <section class="panel form"><h3>Audio</h3>
-      <div class="row"><label class="lbl" for="optEngine">Voix</label><select id="optEngine">${engineOpts}</select></div>
-      ${S.prefs.engine === "browser" || !CL.tts ? `<div class="row"><label class="lbl" for="optVoice">Voix du navigateur</label><select id="optVoice"><option value="">Automatique (${S.prefs.accent === "en-GB" ? "britannique" : "américaine"})</option>${voices.map((v) => `<option value="${esc(v.name)}" ${S.prefs.voiceName === v.name ? "selected" : ""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}</select></div>` : ""}
+      <div class="row"><label class="lbl" for="optVoice">Voix principale</label><select id="optVoice"><option value="">Automatique (${S.prefs.accent === "en-GB" ? "britannique" : "américaine"})</option>${voices.map((v) => `<option value="${esc(v.name)}" ${S.prefs.voiceName === v.name ? "selected" : ""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}</select><span class="small muted">Les voix « Natural », « Online » ou « Google » sont les plus naturelles (Edge et Chrome). Les dialogues utilisent automatiquement une deuxième voix.</span></div>
       <div class="row"><label class="lbl" for="optAccent">Accent (voix du navigateur et reconnaissance vocale)</label><select id="optAccent"><option value="en-US" ${S.prefs.accent === "en-US" ? "selected" : ""}>Américain</option><option value="en-GB" ${S.prefs.accent === "en-GB" ? "selected" : ""}>Britannique</option></select></div>
       <div class="row"><label class="lbl" for="optRate">Vitesse normale : ${Number(S.prefs.rate).toFixed(2)}×</label><input type="range" id="optRate" min="0.7" max="1.3" step="0.05" value="${S.prefs.rate}" style="accent-color:var(--accent)"></div>
       <div class="row"><label class="switch"><input type="checkbox" id="optPrimer" ${S.prefs.primer ? "checked" : ""}> Amorce audio : petite pause avant chaque phrase pour ne pas couper le début</label></div>
@@ -1063,57 +1141,29 @@ function viewProfile() {
       <div class="actions">${audioBtns("Let's check the pressure gauge before opening the valve.", "Tester la voix")}</div>
     </section>
     <section class="panel form"><h3>Sauvegarde</h3>
-      <span class="small muted">${CL.progRef ? "Votre progression est enregistrée sur votre compte Claude et dans ce navigateur." : "Votre progression est enregistrée dans ce navigateur. Copiez une sauvegarde de temps en temps pour la transférer ou la garder."}</span>
+      <span class="small muted">Votre progression est enregistrée dans ce navigateur, sans compte ni serveur. Copiez une sauvegarde de temps en temps pour la transférer sur un autre appareil ou la garder.</span>
       <div class="actions"><button class="btn" id="btnExport">Copier la sauvegarde</button><button class="btn" id="btnImportShow">Restaurer une sauvegarde</button></div>
       <div id="importBox" hidden style="display:grid;gap:8px"><textarea id="importText" placeholder="Collez ici le texte de sauvegarde"></textarea><div class="actions"><button class="btn primary" id="btnImport">Restaurer</button></div></div>
     </section>`;
 }
 
-const VIEWS = ["accueil", "lecon", "revision", "entrainement", "prononciation", "niveau", "profil", "test"];
+const VIEWS = ["accueil", "lecon", "revision", "entrainement", "dialogues", "prononciation", "niveau", "profil", "test"];
 function render() {
   const h = (location.hash || "#accueil").slice(1);
   VIEW = VIEWS.includes(h) ? h : "accueil";
   document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.dataset.v === VIEW) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   let html;
   if (!S.profile && VIEW !== "test") html = viewOnboarding();
-  else html = { accueil: viewHome, lecon: viewLesson, revision: viewReview, entrainement: viewPractice, prononciation: viewPron, niveau: viewLevel, profil: viewProfile, test: viewTest }[VIEW]();
+  else html = { accueil: viewHome, lecon: viewLesson, revision: viewReview, entrainement: viewPractice, dialogues: viewDialogues, prononciation: viewPron, niveau: viewLevel, profil: viewProfile, test: viewTest }[VIEW]();
   app.innerHTML = html;
   updateHeader();
 }
+document.addEventListener("click", (ev) => {
+  const a = ev.target.closest('a[href="#dialogues"]'); if (!a) return;
+  stopAudio(); DLG.id = null; DLG.role = null;
+  if (location.hash === "#dialogues") { ev.preventDefault(); render(); window.scrollTo(0, 0); }
+});
 window.addEventListener("hashchange", () => { revShown = false; stopAudio(); render(); window.scrollTo(0, 0); });
-
-/* ================= Génération avec Claude ================= */
-async function generate(t, btn) {
-  if (!CL.sample) return;
-  const status = $("#genStatus");
-  btn.disabled = true; if (status) status.innerHTML = '<span class="spin"></span> Claude prépare vos cartes…';
-  const lvl = curLevel(), nx = nextLvl(lvl);
-  const doms = ["gen", ...S.prefs.domains];
-  const existing = itemsOf((x) => x.t === t).map((x) => x.en).slice(-350).join("; ");
-  const spec = t === "w"
-    ? `Return a JSON array of exactly 10 objects with keys: "dom" (one of: ${doms.join(", ")}), "lvl" ("${lvl}" or "${nx}"), "en" (English word or short term), "ipa" (General American IPA, no slashes), "fr" (French translation), "ex" (natural English example sentence), "exFr" (French translation of the example), "tip" (one short pronunciation tip in French for a French speaker, or empty string).`
-    : `Return a JSON array of exactly 10 objects with keys: "dom" (one of: ${doms.join(", ")}), "lvl" ("${lvl}" or "${nx}"), "en" (a full natural sentence using a common spoken expression, idiom or phrasal verb), "fr" (natural French equivalent), "note" (one short usage note in French that names the expression), "fast" (how it sounds in fast natural speech, syllables joined by hyphens, stressed syllables in CAPS).`;
-  const prompt = `You create English flashcards for a French native speaker who works as a pharmaceutical CQV/CSV validation engineer. Current CEFR level: ${lvl}; goal: ${S.profile?.goal || "C2"}. Domains: "gen" = general everyday and cultural English (about half of the items), "pharma" = GMP/quality, "cqv" = commissioning, qualification, computer system validation, "eng" = industrial engineering, "pro" = general professional English, "travel" = travel. Use only these domains: ${doms.join(", ")}. Pick genuinely useful ${t === "w" ? "vocabulary" : "expressions"} at level ${lvl} or ${nx} that native speakers really use. Do not repeat any of these: ${existing}.\n\n${spec}\nReply with only the JSON array.`;
-  try {
-    const arr = await CL.sample.json(prompt, { modelTier: "default" });
-    if (!Array.isArray(arr)) throw new Error("format");
-    let n = 0;
-    for (const o of arr) {
-      if (!o || typeof o.en !== "string") continue;
-      const dom = DOM[o.dom] ? o.dom : "gen", lv = LEVELS.includes(o.lvl) ? o.lvl : lvl;
-      const it = t === "w"
-        ? { id: `w|${dom}|${o.en.trim()}`, t, dom, lvl: lv, en: o.en.trim(), ipa: String(o.ipa || "").replace(/^\/|\/$/g, ""), fr: String(o.fr || ""), ex: String(o.ex || ""), exFr: String(o.exFr || ""), tip: String(o.tip || ""), gen: 1 }
-        : { id: `e|${dom}|${o.en.trim()}`, t, dom, lvl: lv, en: o.en.trim(), fr: String(o.fr || ""), note: String(o.note || ""), fast: String(o.fast || ""), gen: 1 };
-      if (addItem(it, null)) { CUSTOM.push(it); n++; }
-    }
-    saveCustom();
-    toast(n ? `${n} nouvelles cartes ajoutées.` : "Aucune nouvelle carte : réessayez.");
-    render();
-  } catch (e) {
-    btn.disabled = false;
-    if (status) status.textContent = e && e.code === "rate_limited" ? "Trop de demandes, réessayez dans quelques minutes." : e && e.code === "not_granted" ? "L'accès à Claude n'est pas autorisé pour cette page." : "La génération a échoué, réessayez.";
-  }
-}
 
 /* ================= Événements ================= */
 app.addEventListener("submit", (ev) => {
@@ -1155,7 +1205,33 @@ app.addEventListener("click", (ev) => {
   if (ds.learn) { learn(ds.learn, !isLearned(ds.learn)); render(); return; }
   if (ds.learnall) { ensureToday()[ds.learnall].forEach((id) => learn(id, true)); render(); toast("Cartes envoyées en révision pour demain."); return; }
   if (ds.ltab) { lessonTab = ds.ltab; render(); return; }
-  if (ds.gen) { generate(ds.gen, b); return; }
+  if (ds.dlg) { DLG.id = ds.dlg; DLG.ans = {}; DLG.role = null; DLG.showT = false; DLG.showF = false; render(); window.scrollTo(0, 0); return; }
+  if (ds.dplay) { playDialogue(!!ds.slow); return; }
+  if (ds.dstop) { stopAudio(); markLine(-1); return; }
+  if (ds.dline !== undefined) { const d = curDlg(); if (d) { stopAudio(); speakLine(d, Number(ds.dline), !!ds.slow); } return; }
+  if (ds.dq !== undefined) {
+    const d = curDlg(), k = Number(ds.dq), j = Number(ds.da);
+    if (d && DLG.ans[k] === undefined) {
+      DLG.ans[k] = j; const ok = j === d.qs[k][2]; addSkill("listen", ok ? 1 : 0);
+      if (Object.keys(DLG.ans).length === d.qs.length) dlgDone(Math.round(d.qs.filter((q, x) => DLG.ans[x] === q[2]).length / d.qs.length * 100)); else save();
+      render();
+    }
+    return;
+  }
+  if (ds.dqreset) { DLG.ans = {}; render(); return; }
+  if (ds.roleplay) { DLG.role = { i: 0, res: {} }; roleAdvance(); return; }
+  if (ds.roleexit) { stopAudio(); DLG.role = null; render(); return; }
+  if (ds.rolenext) { if (DLG.role) { DLG.role.i++; roleAdvance(); } return; }
+  if (ds.rolecheck !== undefined) { const v = ($("#roleInput").value || "").trim(); if (!v) { toast("Tapez d'abord votre réplique."); return; } roleResult(Number(ds.rolecheck), v); return; }
+  if (ds.rolemic !== undefined) {
+    const i = Number(ds.rolemic), live = $("#roleLive");
+    if (live) live.textContent = "Parlez maintenant… (cliquez à nouveau pour arrêter)";
+    startListening(b, (p) => { if (live && p) live.textContent = p; }, (text) => {
+      if (!text) { if (live) live.textContent = "Rien n'a été entendu. Rapprochez-vous du micro et réessayez."; return; }
+      roleResult(i, text);
+    });
+    return;
+  }
   if (ds.showans) { revShown = true; render(); return; }
   if (ds.hideans) { revShown = false; render(); return; }
   if (ds.grade) { const id = revQueue[0], g = Number(ds.grade); grade(id, g); revQueue.shift(); if (g === 0) revQueue.push(id); revShown = false; render(); return; }
@@ -1193,6 +1269,8 @@ app.addEventListener("click", (ev) => {
 function showExport(txt) { $("#importBox").hidden = false; const t = $("#importText"); t.value = txt; t.select(); toast("Copiez le texte sélectionné."); }
 app.addEventListener("change", (ev) => {
   const el = ev.target;
+  if (el.id === "dlgShowT") { DLG.showT = el.checked; render(); return; }
+  if (el.id === "dlgShowF") { DLG.showF = el.checked; render(); return; }
   if (el.id === "optAudioFirst") { S.prefs.audioFirst = el.checked; save(); render(); }
   else if (el.dataset.dom) {
     const set = new Set(S.prefs.domains); el.checked ? set.add(el.dataset.dom) : set.delete(el.dataset.dom);
@@ -1201,7 +1279,6 @@ app.addEventListener("change", (ev) => {
   else if (el.id === "sName" || el.id === "sJob" || el.id === "sGoal") { S.profile = { ...(S.profile || {}), name: $("#sName").value.trim() || "Vous", job: $("#sJob").value.trim(), goal: $("#sGoal").value }; save(); updateHeader(); }
   else if (el.id === "sDaily") { S.prefs.daily = Number(el.value); save(); }
   else if (el.id === "sShare") { S.prefs.genShare = Number(el.value); save(); }
-  else if (el.id === "optEngine") { S.prefs.engine = el.value; save(); render(); }
   else if (el.id === "optVoice") { S.prefs.voiceName = el.value; save(); }
   else if (el.id === "optAccent") { S.prefs.accent = el.value; S.prefs.voiceName = ""; save(); render(); }
   else if (el.id === "optRate") { S.prefs.rate = Number(el.value); save(); render(); }
@@ -1213,7 +1290,6 @@ app.addEventListener("keydown", (ev) => {
 });
 
 render();
-initClaude();
 })();
 </script>
 
