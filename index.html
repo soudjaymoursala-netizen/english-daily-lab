@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>English Daily Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans:wght@400&display=swap">
+<style>
+/* Layout : une colonne de travail type « carnet de lot » ; barre d'onglets collante, cartes d'apprentissage empilées. */
+:root {
+  --bg: #f2f5f7;
+  --surface: #ffffff;
+  --surface-2: #e8eef2;
+  --ink: #0f2230;
+  --muted: #566977;
+  --line: #d3dce3;
+  --accent: #0b7a75;
+  --accent-soft: #d5efed;
+  --accent-ink: #ffffff;
+  --signal: #b45309;
+  --signal-soft: #fdecd6;
+  --good: #15803d;
+  --good-soft: #dcf3e3;
+  --bad: #b42318;
+  --bad-soft: #fbe3e0;
+  --f-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-ipa: "Noto Sans", "Doulos SIL", "Charis SIL", "Segoe UI", "Arial Unicode MS", sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1418; --surface: #111d23; --surface-2: #19282f; --ink: #e2edf1; --muted: #8fa3ae; --line: #25363f;
+    --accent: #3cc0b6; --accent-soft: #123a38; --accent-ink: #032523; --signal: #f2a33a; --signal-soft: #3a2a12;
+    --good: #4ade80; --good-soft: #12301d; --bad: #f87171; --bad-soft: #3a1717; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1418; --surface: #111d23; --surface-2: #19282f; --ink: #e2edf1; --muted: #8fa3ae; --line: #25363f;
+  --accent: #3cc0b6; --accent-soft: #123a38; --accent-ink: #032523; --signal: #f2a33a; --signal-soft: #3a2a12;
+  --good: #4ade80; --good-soft: #12301d; --bad: #f87171; --bad-soft: #3a1717; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px 6px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 1.35rem; font-weight: 700; }
+.lot { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.meters { display: flex; gap: 14px; font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meters b { color: var(--ink); font-weight: 500; }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs a { flex: none; padding: 10px 12px; text-decoration: none; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs .count { font-family: var(--f-mono); font-size: 0.72rem; background: var(--signal-soft); color: var(--signal); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
+
+main { padding-block: 20px 64px; display: grid; gap: 18px; }
+.view-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+.view-head h2 { font-size: 1.6rem; }
+.view-head p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; color: var(--muted); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+
+.switch { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.9rem; cursor: pointer; user-select: none; }
+.switch input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.progress-strip { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.progress-strip span { height: 6px; border-radius: 3px; background: var(--line); }
+.progress-strip span.on { background: var(--accent); }
+
+.cards { display: grid; gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.card.done { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.card-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.chip.ok { background: var(--accent-soft); color: var(--accent); }
+.term { font-family: var(--f-display); font-size: 1.5rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.term.expr { font-size: 1.25rem; font-weight: 500; }
+.ipa { font-family: var(--f-ipa); color: var(--accent); font-size: 1.05rem; }
+.fr { font-size: 1rem; }
+.fr b { font-weight: 600; }
+.example { border-left: 3px solid var(--line); padding-left: 12px; display: grid; gap: 2px; }
+.example .en { font-weight: 500; }
+.example .tr { color: var(--muted); font-size: 0.92rem; }
+.tip { background: var(--signal-soft); color: var(--ink); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
+.tip .k { font-family: var(--f-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--signal); display: block; }
+.fast { font-family: var(--f-mono); font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 12px; font-weight: 500; font-size: 0.9rem; }
+.btn:hover { background: var(--surface-2); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.audio { border-color: color-mix(in srgb, var(--signal) 40%, var(--line)); color: var(--signal); }
+.btn.audio.playing { background: var(--signal-soft); }
+.btn.mic.live { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.btn.learned[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.btn.big { padding: 12px 18px; font-size: 1rem; border-radius: 12px; }
+
+.listen-first { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0; }
+.listen-first .hint { color: var(--muted); font-size: 0.92rem; }
+
+.result { border-radius: 10px; padding: 10px 12px; background: var(--surface-2); display: grid; gap: 6px; font-size: 0.95rem; }
+.result .score { font-family: var(--f-mono); font-weight: 500; }
+.words { line-height: 1.9; }
+.words span { padding: 1px 4px; border-radius: 4px; margin-right: 2px; }
+.words .ok { background: var(--good-soft); color: var(--good); }
+.words .miss { background: var(--bad-soft); color: var(--bad); text-decoration: underline dotted; }
+.words .extra { color: var(--muted); text-decoration: line-through; }
+.partial { color: var(--muted); font-style: italic; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel h3 { font-size: 1.1rem; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.empty { text-align: center; padding: 32px 16px; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
+.empty h3 { color: var(--ink); }
+
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.choice { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 12px; font-size: 0.95rem; }
+.choice:hover { background: var(--surface-2); }
+.choice.right { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.choice.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+
+textarea, input[type="text"], select { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; }
+textarea { resize: vertical; min-height: 80px; }
+
+.grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grade button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 6px; display: grid; gap: 2px; font-weight: 600; }
+.grade button small { font-family: var(--f-mono); font-weight: 400; color: var(--muted); font-size: 0.72rem; }
+.grade .g0 { color: var(--bad); }
+.grade .g1 { color: var(--signal); }
+.grade .g2 { color: var(--accent); }
+.grade .g3 { color: var(--good); }
+@media (max-width: 460px) { .grade { grid-template-columns: repeat(2, 1fr); } }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; }
+.tile .n { font-family: var(--f-display); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .l { font-size: 0.85rem; color: var(--muted); }
+.boxes { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--surface-2); }
+.boxes span { height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.heat { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; max-width: 420px; }
+.heat span { aspect-ratio: 1; border-radius: 3px; background: var(--surface-2); max-width: 100%; }
+.heat span.l1 { background: color-mix(in srgb, var(--accent) 35%, var(--surface-2)); }
+.heat span.l2 { background: color-mix(in srgb, var(--accent) 65%, var(--surface-2)); }
+.heat span.l3 { background: var(--accent); }
+.roadmap { display: grid; gap: 8px; }
+.roadmap div { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: start; }
+.roadmap .lvl { font-family: var(--f-mono); font-weight: 500; background: var(--surface-2); border-radius: 6px; text-align: center; padding: 2px 0; }
+.roadmap .lvl.cur { background: var(--accent); color: var(--accent-ink); }
+.settings { display: grid; gap: 14px; }
+.settings .row { display: grid; gap: 6px; }
+.settings label.lbl { font-weight: 600; font-size: 0.9rem; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; cursor: pointer; font-size: 0.9rem; }
+.checks input { accent-color: var(--accent); }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; z-index: 20; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgb(0 0 0 / 0.2); }
+.notice { background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: sp 0.8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <h1>English Daily Lab</h1>
+        <span class="lot" id="lotLabel">Lot du jour</span>
+      </div>
+      <div class="meters" aria-live="polite">
+        <span>Série <b id="mStreak">0</b> j</span>
+        <span>Appris <b id="mLearned">0</b></span>
+        <span>À revoir <b id="mDue">0</b></span>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#aujourdhui" data-v="aujourdhui">Aujourd'hui</a>
+      <a href="#revision" data-v="revision">Révision<span class="count" id="tabDue" hidden></span></a>
+      <a href="#ecoute" data-v="ecoute">Écoute &amp; dictée</a>
+      <a href="#prononciation" data-v="prononciation">Prononciation</a>
+      <a href="#progres" data-v="progres">Progrès &amp; réglages</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+"use strict";
+/* ---------- Utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = (n) => String(n).padStart(2, "0");
+const dkey = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (k, n) => { const [y, m, d] = k.split("-").map(Number); const x = new Date(y, m - 1, d); x.setDate(x.getDate() + n); return dkey(x); };
+const diffDays = (a, b) => { const p = (k) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d).getTime(); }; return Math.round((p(b) - p(a)) / 86400000); };
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const frDate = (k) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }); };
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3200); }
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>',
+  slow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>'
+};
+
+/* ---------- Contenu ---------- */
+const DOM = window.EN_DOMAINS;
+const ITEMS = new Map();
+const BASE_ORDER = { w: [], e: [] };
+function addItem(it, base) {
+  if (!it || !it.en || ITEMS.has(it.id)) return false;
+  ITEMS.set(it.id, it);
+  if (base) BASE_ORDER[it.t].push(it.id);
+  return true;
+}
+(function loadBase() {
+  const doms = Object.keys(DOM);
+  const max = Math.max(...doms.map((d) => Math.max(window.EN_WORDS[d].length, window.EN_EXPR[d].length)));
+  for (let i = 0; i < max; i++) for (const d of doms) {
+    const w = window.EN_WORDS[d][i];
+    if (w) addItem({ id: `w|${d}|${w[0]}`, t: "w", dom: d, en: w[0], ipa: w[1], fr: w[2], ex: w[3], exFr: w[4], tip: w[5] || "" }, true);
+    const e = window.EN_EXPR[d][i];
+    if (e) addItem({ id: `e|${d}|${e[0]}`, t: "e", dom: d, en: e[0], fr: e[1], note: e[2] || "", fast: e[3] || "" }, true);
+  }
+})();
+
+/* ---------- État ---------- */
+const LS_KEY = "edl-state-v1", LS_CUSTOM = "edl-custom-v1";
+const defaultState = () => ({
+  v: 1, upd: 0, start: dkey(),
+  prefs: { domains: Object.keys(DOM), engine: "auto", accent: "en-US", rate: 1, audioFirst: true, voiceName: "" },
+  days: {}, srs: {}, act: {}, stats: { dictN: 0, dictSum: 0, pronN: 0, pronSum: 0, quizN: 0, quizOk: 0 }
+});
+let S = defaultState();
+let CUSTOM = [];
+function mergeState(x) {
+  const d = defaultState();
+  if (!x || typeof x !== "object") return d;
+  return { ...d, ...x, prefs: { ...d.prefs, ...(x.prefs || {}) }, stats: { ...d.stats, ...(x.stats || {}) }, days: x.days || {}, srs: x.srs || {}, act: x.act || {} };
+}
+try { const raw = localStorage.getItem(LS_KEY); if (raw) S = mergeState(JSON.parse(raw)); } catch (e) {}
+try { const raw = localStorage.getItem(LS_CUSTOM); if (raw) CUSTOM = JSON.parse(raw) || []; } catch (e) {}
+function normalizeCustom(c) {
+  return c && c.en && (c.t === "w" || c.t === "e") && DOM[c.dom] ? c : null;
+}
+CUSTOM.forEach((c) => addItem(normalizeCustom(c), false));
+
+let saveT = null;
+function save() {
+  S.upd = Date.now();
+  try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
+  clearTimeout(saveT); saveT = setTimeout(pushRemote, 1500);
+}
+function saveCustom() {
+  try { localStorage.setItem(LS_CUSTOM, JSON.stringify(CUSTOM)); } catch (e) {}
+  pushCustom();
+}
+function bump(n = 1) { const k = dkey(); S.act[k] = (S.act[k] || 0) + n; }
+
+/* ---------- Synchronisation (Claude) ---------- */
+const CL = { tts: null, dict: null, sample: null, db: null, progRef: null, custRef: null, writing: false, again: false, ttsOff: false };
+async function initClaude() {
+  const c = window.claude;
+  if (!c || typeof c.use !== "function") return;
+  c.use("tts").then((t) => { CL.tts = t; render(); }).catch(() => {});
+  c.use("dictation").then((d) => { if (d) { CL.dict = d; wireDictation(d); render(); } }).catch(() => {});
+  c.use("sample").then((s) => { CL.sample = s; render(); }).catch(() => {});
+  try {
+    const [db, user] = await Promise.all([c.use("db"), c.use("user")]);
+    if (!db || !user) return;
+    const uid = await user.id();
+    if (!uid) return;
+    const col = db.collection("data/users/" + uid);
+    CL.db = db; CL.progRef = col.doc("progress"); CL.custRef = col.doc("custom");
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000));
+    const [p, cu] = await Promise.race([Promise.all([CL.progRef.get(), CL.custRef.get()]), timeout]);
+    const remote = p.exists ? p.data() : null;
+    if (remote && remote.state) {
+      const rs = mergeState(remote.state);
+      if ((rs.upd || 0) > (S.upd || 0)) { S = rs; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+    }
+    const rc = cu.exists ? (cu.data().items || []) : [];
+    let added = false;
+    for (const it of rc) { const n = normalizeCustom(it); if (n && addItem(n, false)) { CUSTOM.push(n); added = true; } }
+    if (added) { try { localStorage.setItem(LS_CUSTOM, JSON.stringify(CUSTOM)); } catch (e) {} }
+    if (!remote || (S.upd || 0) > (remote.state?.upd || 0)) pushRemote();
+    if (CUSTOM.length > rc.length) pushCustom();
+    render();
+  } catch (e) { /* hors ligne ou indisponible : le navigateur garde la progression */ }
+}
+async function pushRemote() {
+  if (!CL.progRef) return;
+  if (CL.writing) { CL.again = true; return; }
+  CL.writing = true;
+  try { await CL.progRef.set({ state: JSON.parse(JSON.stringify(S)) }); } catch (e) {}
+  CL.writing = false;
+  if (CL.again) { CL.again = false; pushRemote(); }
+}
+async function pushCustom() {
+  if (!CL.custRef) return;
+  try { await CL.custRef.set({ items: CUSTOM.slice(-600) }); } catch (e) {}
+}
+
+/* ---------- Voix ---------- */
+const synth = window.speechSynthesis || null;
+let voices = [];
+function loadVoices() { if (synth) voices = synth.getVoices().filter((v) => /^en[-_]/i.test(v.lang)); }
+if (synth) { loadVoices(); synth.onvoiceschanged = () => { loadVoices(); if (VIEW === "progres") render(); }; }
+function pickVoice() {
+  if (!voices.length) return null;
+  if (S.prefs.voiceName) { const v = voices.find((x) => x.name === S.prefs.voiceName); if (v) return v; }
+  const acc = S.prefs.accent.toLowerCase();
+  const same = voices.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(acc));
+  const pool = same.length ? same : voices;
+  return pool.find((v) => /natural|neural|google|samantha|daniel|aria|jenny|premium/i.test(v.name)) || pool[0];
+}
+function useTts() { return CL.tts && !CL.ttsOff && S.prefs.engine !== "browser"; }
+function canSpeak() { return useTts() || !!synth; }
+let playingBtn = null;
+function markPlaying(btn, on) { if (playingBtn && playingBtn !== btn) playingBtn.classList.remove("playing"); playingBtn = on ? btn : null; if (btn) btn.classList.toggle("playing", on); }
+function speak(text, slow, btn) {
+  const rate = slow ? 0.72 : Number(S.prefs.rate) || 1;
+  markPlaying(btn, true);
+  if (useTts()) {
+    return CL.tts.speak(text, { rate, language: "en" }).catch((e) => {
+      const code = e && e.code;
+      if (code === "not_granted") { CL.ttsOff = true; toast("La lecture audio est désactivée pour cette page (menu Permissions)."); render(); return; }
+      if (code === "stopped" || code === "busy" || code === "no_gesture") { if (code === "busy") toast("Le micro est en cours d'utilisation."); return; }
+      return browserSpeak(text, rate);
+    }).finally(() => markPlaying(btn, false));
+  }
+  return browserSpeak(text, rate).finally(() => markPlaying(btn, false));
+}
+function browserSpeak(text, rate) {
+  return new Promise((res) => {
+    if (!synth) { toast("Ce navigateur ne sait pas lire le texte à voix haute."); return res(); }
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickVoice(); if (v) u.voice = v;
+    u.lang = v ? v.lang : S.prefs.accent; u.rate = rate;
+    u.onend = u.onerror = () => res();
+    synth.speak(u);
+  });
+}
+
+/* ---------- Reconnaissance vocale ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let rec = null; // session en cours : { finals, onPartial, onDone, btn }
+function canListen() { return !!CL.dict || !!SR; }
+function wireDictation(d) {
+  d.onPartial(({ text }) => { if (rec && rec.onPartial) rec.onPartial(text); });
+  d.onFinal(({ text }) => { if (!rec) return; rec.finals += text; if (rec.onPartial) rec.onPartial(""); clearTimeout(rec.t); rec.t = setTimeout(() => d.stop(), 1400); });
+  d.onState(({ state, reason }) => {
+    if (!rec) return;
+    if (rec.btn) rec.btn.classList.toggle("live", state === "listening" || state === "starting");
+    if (state === "idle") {
+      const r = rec; rec = null;
+      if (reason === "not_granted") toast("Micro refusé. Vous pouvez l'autoriser dans le menu Permissions de la page.");
+      else if (reason === "unavailable") toast("La dictée en anglais n'est pas disponible ici.");
+      else if (reason === "rate_limited") toast("Trop de dictées en même temps, réessayez dans un instant.");
+      r.onDone(r.finals.trim());
+    }
+  });
+}
+function startListening(btn, onPartial, onDone) {
+  if (rec) { // second clic : arrêter
+    if (CL.dict) CL.dict.stop(); else if (rec.sr) rec.sr.stop();
+    return;
+  }
+  if (playingBtn && CL.tts) { try { CL.tts.stop(); } catch (e) {} }
+  if (synth) synth.cancel();
+  if (CL.dict) {
+    rec = { finals: "", onPartial, onDone, btn };
+    btn.classList.add("live");
+    CL.dict.start({ language: "en" }).catch((e) => {
+      const c = e && e.code;
+      if (c === "not_granted") toast("Micro refusé. Vous pouvez l'autoriser dans le menu Permissions de la page.");
+      else if (c === "unavailable") toast("La dictée en anglais n'est pas disponible ici.");
+      else if (c && c !== "stopped" && c !== "dismissed") toast("Le micro n'a pas pu démarrer, réessayez.");
+      if (rec && rec.btn === btn && !CL.dict.active()) { btn.classList.remove("live"); const r = rec; rec = null; r.onDone(r.finals.trim()); }
+    });
+    return;
+  }
+  if (SR) {
+    const sr = new SR();
+    sr.lang = S.prefs.accent; sr.interimResults = true; sr.maxAlternatives = 1; sr.continuous = false;
+    rec = { finals: "", onPartial, onDone, btn, sr };
+    btn.classList.add("live");
+    sr.onresult = (ev) => {
+      let interim = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (r.isFinal) rec.finals += " " + r[0].transcript; else interim += r[0].transcript;
+      }
+      onPartial(interim);
+    };
+    sr.onerror = (ev) => { if (ev.error === "not-allowed") toast("Micro refusé par le navigateur."); };
+    sr.onend = () => { btn.classList.remove("live"); const r = rec; rec = null; if (r) r.onDone(r.finals.trim()); };
+    try { sr.start(); } catch (e) { btn.classList.remove("live"); rec = null; }
+    return;
+  }
+  toast("La reconnaissance vocale n'est pas disponible dans ce navigateur. Essayez Chrome ou Edge.");
+}
+
+/* ---------- Comparaison de textes ---------- */
+const CONTR = [[/\bwon't\b/g, "will not"], [/\bcan't\b/g, "can not"], [/\bcannot\b/g, "can not"], [/\bi'm\b/g, "i am"], [/n't\b/g, " not"], [/'ll\b/g, " will"], [/'re\b/g, " are"], [/'ve\b/g, " have"], [/'d\b/g, " would"], [/\b(it|that|there|what|he|she|who|where)'s\b/g, "$1 is"]];
+function words(s) {
+  let x = String(s).toLowerCase().replace(/[’‘`]/g, "'").replace(/a\.m\./g, "am").replace(/p\.m\./g, "pm");
+  for (const [re, r] of CONTR) x = x.replace(re, r);
+  return x.replace(/[^a-z0-9' ]+/g, " ").replace(/'/g, "").split(/\s+/).filter(Boolean);
+}
+function compare(target, got) {
+  const tw = String(target).split(/\s+/).filter(Boolean); // mots affichés
+  const tn = tw.map((w) => words(w).join(" ")); // normalisés (peut contenir 2 mots après expansion)
+  const flatT = []; tn.forEach((n, i) => n.split(" ").filter(Boolean).forEach((p) => flatT.push({ p, i })));
+  const g = words(got);
+  const n = flatT.length, m = g.length;
+  const L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = flatT[i].p === g[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const okT = new Array(n).fill(false), okG = new Array(m).fill(false);
+  let i = 0, j = 0;
+  while (i < n && j < m) { if (flatT[i].p === g[j]) { okT[i] = okG[j] = true; i++; j++; } else if (L[i + 1][j] >= L[i][j + 1]) i++; else j++; }
+  const dispOk = tw.map((_, k) => { const parts = flatT.map((f, idx) => [f, idx]).filter(([f]) => f.i === k); return parts.length ? parts.every(([, idx]) => okT[idx]) : true; });
+  const score = n ? Math.round((okT.filter(Boolean).length / n) * 100) : 0;
+  const extra = g.filter((_, k) => !okG[k]);
+  return { tw, dispOk, score, extra };
+}
+function diffHtml(r) {
+  return `<div class="words">${r.tw.map((w, k) => `<span class="${r.dispOk[k] ? "ok" : "miss"}">${esc(w)}</span>`).join("")}${r.extra.length ? ` <span class="extra">${esc(r.extra.join(" "))}</span>` : ""}</div>`;
+}
+function verdict(s) { return s >= 95 ? "Excellent" : s >= 80 ? "Très bien" : s >= 60 ? "Presque" : "À retravailler"; }
+
+/* ---------- Leçon du jour ---------- */
+function seenSet() {
+  const s = new Set(Object.keys(S.srs));
+  for (const d of Object.values(S.days)) { (d.w || []).forEach((x) => s.add(x)); (d.e || []).forEach((x) => s.add(x)); }
+  return s;
+}
+function candidates(t, seen) {
+  const doms = S.prefs.domains.length ? S.prefs.domains : Object.keys(DOM);
+  const custom = CUSTOM.filter((c) => c.t === t).map((c) => c.id);
+  return [...BASE_ORDER[t], ...custom].filter((id) => !seen.has(id) && ITEMS.has(id) && doms.includes(ITEMS.get(id).dom));
+}
+function ensureToday() {
+  const k = dkey();
+  const day = S.days[k] || { w: [], e: [] };
+  const seen = seenSet();
+  let changed = !S.days[k];
+  for (const t of ["w", "e"]) {
+    if (day[t].length >= 10) continue;
+    const add = candidates(t, seen).slice(0, 10 - day[t].length);
+    if (add.length) { day[t].push(...add); add.forEach((x) => seen.add(x)); changed = true; }
+  }
+  if (changed) { S.days[k] = day; save(); }
+  return day;
+}
+function lessonNumber() { return Object.keys(S.days).sort().indexOf(dkey()) + 1 || Object.keys(S.days).length + 1; }
+function isLearned(id) { return !!S.srs[id]; }
+function learn(id, on) {
+  if (on && !S.srs[id]) { S.srs[id] = { b: 1, d: addDays(dkey(), 1), n: 0, l: 0, a: dkey() }; bump(); }
+  else if (!on && S.srs[id] && S.srs[id].n === 0) delete S.srs[id];
+  save();
+}
+
+/* ---------- Répétition espacée ---------- */
+const INTERVALS = [0, 1, 2, 4, 7, 15, 30, 60, 120];
+function dueList() { const t = dkey(); return Object.entries(S.srs).filter(([id, r]) => r.d <= t && ITEMS.has(id)).sort((a, b) => a[1].d.localeCompare(b[1].d)).map(([id]) => id); }
+function nextFor(r, g) {
+  let b = r.b, days;
+  if (g === 0) { b = 1; days = 0; }
+  else if (g === 1) { days = Math.max(1, Math.ceil(INTERVALS[b] / 2)); }
+  else if (g === 2) { b = Math.min(8, b + 1); days = INTERVALS[b]; }
+  else { b = Math.min(8, b + 2); days = INTERVALS[b]; }
+  return { b, days };
+}
+function grade(id, g) {
+  const r = S.srs[id]; if (!r) return;
+  const nx = nextFor(r, g);
+  r.b = nx.b; r.d = addDays(dkey(), nx.days); r.n++; if (g === 0) r.l++;
+  bump(); save();
+}
+const fmtDays = (d) => d === 0 ? "auj." : d === 1 ? "1 j" : d < 30 ? `${d} j` : `${Math.round(d / 30)} mois`;
+
+/* ---------- Statistiques ---------- */
+function streak() {
+  let k = dkey(), n = 0;
+  if (!S.act[k]) k = addDays(k, -1);
+  while (S.act[k]) { n++; k = addDays(k, -1); }
+  return n;
+}
+function updateMeters() {
+  const due = dueList().length;
+  $("#mStreak").textContent = streak();
+  $("#mLearned").textContent = Object.keys(S.srs).length;
+  $("#mDue").textContent = due;
+  const td = $("#tabDue"); td.hidden = !due; td.textContent = due;
+  $("#lotLabel").textContent = `Lot n° ${String(lessonNumber()).padStart(3, "0")} · ${frDate(dkey())}`;
+}
+
+/* ---------- Rendu des cartes ---------- */
+function audioBtns(text, label = "Écouter") {
+  if (!canSpeak()) return "";
+  return `<button class="btn audio" data-say="${esc(text)}">${ICON.play}${esc(label)}</button><button class="btn audio" data-say="${esc(text)}" data-slow="1" title="Écouter lentement">${ICON.slow}Lent</button>`;
+}
+function micBtn(target) {
+  if (!canListen()) return "";
+  return `<button class="btn mic" data-mic="${esc(target)}">${ICON.mic}Répéter</button>`;
+}
+function itemBody(it) {
+  const dom = `<span class="chip">${esc(DOM[it.dom].short)}</span>`;
+  if (it.t === "w") {
+    return `<div class="term">${esc(it.en)}</div>
+      <div class="ipa">/${esc(it.ipa)}/</div>
+      <div class="fr"><b>${esc(it.fr)}</b></div>
+      <div class="actions">${audioBtns(it.en)}${micBtn(it.en)}</div>
+      <div class="example"><span class="en">${esc(it.ex)}</span><span class="tr">${esc(it.exFr)}</span></div>
+      <div class="actions">${audioBtns(it.ex, "Phrase")}${micBtn(it.ex)}</div>
+      ${it.tip ? `<div class="tip"><span class="k">Prononciation</span>${esc(it.tip)}</div>` : ""}
+      <div class="mic-out" hidden></div>`;
+  }
+  return `<div class="term expr">${esc(it.en)}</div>
+    <div class="fr"><b>${esc(it.fr)}</b></div>
+    ${it.fast ? `<div class="fast" title="Comment l'expression sonne à vitesse naturelle">À l'oral : ${esc(it.fast)}</div>` : ""}
+    <div class="actions">${audioBtns(it.en)}${micBtn(it.en)}</div>
+    ${it.note ? `<div class="tip"><span class="k">Usage</span>${esc(it.note)}</div>` : ""}
+    <div class="mic-out" hidden></div>`;
+}
+const revealed = new Set();
+function lessonCard(it, idx, total) {
+  const learned = isLearned(it.id);
+  const hide = S.prefs.audioFirst && canSpeak() && !revealed.has(it.id) && !learned;
+  const kind = it.t === "w" ? "Mot" : "Expression";
+  return `<article class="card ${learned ? "done" : ""}" data-id="${esc(it.id)}">
+    <div class="card-meta"><span>${kind} ${pad(idx + 1)}/${pad(total)} · <span class="chip">${esc(DOM[it.dom].short)}</span></span>
+      <button class="btn learned" data-learn="${esc(it.id)}" aria-pressed="${learned}">${ICON.check}${learned ? "Appris" : "Je l'ai"}</button></div>
+    ${hide ? `<div class="listen-first">
+        <button class="btn audio big" data-say="${esc(it.t === "w" ? it.en : it.en)}">${ICON.play}Écouter d'abord</button>
+        <button class="btn" data-reveal="${esc(it.id)}">${ICON.eye}Afficher</button>
+        <span class="hint">Essayez de l'écrire ou de le comprendre avant d'afficher.</span>
+      </div>` : itemBody(it)}
+  </article>`;
+}
+
+/* ---------- Vues ---------- */
+let VIEW = "aujourdhui";
+let todayTab = "w";
+const app = $("#app");
+
+function viewToday() {
+  const day = ensureToday();
+  const list = day[todayTab].map((id) => ITEMS.get(id)).filter(Boolean);
+  const learnedW = day.w.filter(isLearned).length, learnedE = day.e.filter(isLearned).length;
+  const cur = todayTab === "w" ? learnedW : learnedE;
+  const short = day[todayTab].length < 10;
+  return `<section class="view-head">
+      <div><h2>Leçon du ${esc(frDate(dkey()))}</h2>
+      <p>10 mots et 10 expressions par jour. Écoutez avant de lire : c'est ce qui entraîne votre oreille. Marquez « Je l'ai » pour envoyer la carte en révision demain.</p></div>
+    </section>
+    <div class="actions" style="justify-content:space-between">
+      <div class="seg" role="group" aria-label="Type de contenu">
+        <button data-ttab="w" aria-pressed="${todayTab === "w"}">Mots · ${learnedW}/${day.w.length}</button>
+        <button data-ttab="e" aria-pressed="${todayTab === "e"}">Expressions · ${learnedE}/${day.e.length}</button>
+      </div>
+      <label class="switch"><input type="checkbox" id="optAudioFirst" ${S.prefs.audioFirst ? "checked" : ""}> Écouter d'abord</label>
+    </div>
+    <div class="progress-strip" aria-label="${cur} sur ${list.length} appris">${list.map((it) => `<span class="${isLearned(it.id) ? "on" : ""}"></span>`).join("")}</div>
+    ${!canSpeak() ? `<div class="notice">L'audio n'est pas disponible dans ce navigateur : le texte reste affiché.</div>` : ""}
+    <div class="cards">${list.map((it, i) => lessonCard(it, i, list.length)).join("")}</div>
+    ${short ? moreBlock() : ""}
+    <div class="actions" style="justify-content:flex-end">
+      <button class="btn" data-learnall="${todayTab}">${ICON.check}Tout marquer comme appris</button>
+    </div>`;
+}
+function moreBlock() {
+  const t = todayTab === "w" ? "mots" : "expressions";
+  if (CL.sample) return `<div class="panel"><h3>Banque de ${t} épuisée pour vos domaines</h3>
+    <p class="muted">Claude peut créer de nouveaux ${t} de niveau C1-C2 dans vos domaines, avec traduction, exemple et conseils de prononciation.</p>
+    <div class="actions"><button class="btn primary" data-gen="${todayTab}">${ICON.spark}Générer 10 nouveaux ${t}</button><span class="muted small" id="genStatus"></span></div></div>`;
+  return `<div class="panel"><h3>Banque de ${t} épuisée pour vos domaines</h3><p class="muted">Activez d'autres domaines dans Progrès &amp; réglages, ou continuez avec les révisions.</p></div>`;
+}
+
+let revQueue = null, revShown = false;
+function viewReview() {
+  if (!revQueue) revQueue = dueList();
+  revQueue = revQueue.filter((id) => S.srs[id] && ITEMS.has(id));
+  const id = revQueue[0];
+  if (!id) {
+    const next = Object.values(S.srs).map((r) => r.d).sort()[0];
+    return `<section class="view-head"><div><h2>Révision</h2><p>Les cartes reviennent juste avant que vous les oubliiez : 1, 2, 4, 7, 15, 30 jours…</p></div></section>
+      <div class="panel empty"><h3>Aucune révision à faire</h3>
+      <p>${Object.keys(S.srs).length ? `Prochaine révision : ${esc(frDate(next))}.` : "Marquez des cartes « Je l'ai » dans la leçon du jour pour les retrouver ici demain."}</p>
+      <a class="btn primary" href="#aujourdhui">Aller à la leçon du jour</a></div>`;
+  }
+  const it = ITEMS.get(id), r = S.srs[id];
+  const audio = canSpeak();
+  const front = audio
+    ? `<div class="listen-first"><button class="btn audio big" data-say="${esc(it.en)}" id="revPlay">${ICON.play}Écouter</button><button class="btn" data-say="${esc(it.en)}" data-slow="1">${ICON.slow}Lent</button><span class="hint">Que signifie ce que vous entendez ? Dites-le à voix haute, puis affichez la réponse.</span></div>`
+    : `<div class="term ${it.t === "e" ? "expr" : ""}">${esc(it.en)}</div><p class="muted">Que signifie ce ${it.t === "w" ? "mot" : "cette expression"} ?</p>`;
+  const labels = ["À revoir", "Difficile", "Bien", "Facile"];
+  return `<section class="view-head"><div><h2>Révision</h2><p>${revQueue.length} carte${revQueue.length > 1 ? "s" : ""} à revoir aujourd'hui. Écoutez d'abord, sans lire.</p></div></section>
+    <article class="card" data-id="${esc(id)}">
+      <div class="card-meta"><span>${it.t === "w" ? "Mot" : "Expression"} · <span class="chip">${esc(DOM[it.dom].short)}</span></span><span>Boîte ${r.b}/8</span></div>
+      ${revShown ? itemBody(it) : front}
+      ${revShown
+        ? `<div class="grade">${labels.map((l, g) => `<button class="g${g}" data-grade="${g}">${l}<small>${fmtDays(nextFor(r, g).days)}</small></button>`).join("")}</div>`
+        : `<button class="btn primary big" data-showans="1">${ICON.eye}Afficher la réponse</button>`}
+    </article>`;
+}
+
+function pool() {
+  const learned = Object.keys(S.srs).filter((id) => ITEMS.has(id));
+  const day = S.days[dkey()] || { w: [], e: [] };
+  const ids = [...new Set([...learned, ...day.w, ...day.e])].filter((id) => ITEMS.has(id));
+  return ids.map((id) => ITEMS.get(id));
+}
+
+let listenMode = "quiz", quiz = null, dict = null;
+function newQuiz() {
+  const p = pool();
+  if (p.length < 4) { quiz = null; return; }
+  const it = p[Math.floor(Math.random() * p.length)];
+  const all = [...ITEMS.values()].filter((x) => x.t === it.t && x.id !== it.id);
+  const same = shuffle(all.filter((x) => x.dom === it.dom)).slice(0, 2);
+  const rest = shuffle(all.filter((x) => !same.includes(x))).slice(0, 3 - same.length);
+  quiz = { it, opts: shuffle([it, ...same, ...rest]), answered: null };
+}
+function newDict() {
+  const p = pool();
+  if (!p.length) { dict = null; return; }
+  const it = p[Math.floor(Math.random() * p.length)];
+  dict = { it, text: it.t === "w" ? it.ex : it.en, tr: it.t === "w" ? it.exFr : it.fr, result: null, plays: 0 };
+}
+function viewListen() {
+  const head = `<section class="view-head"><div><h2>Écoute &amp; dictée</h2><p>Votre point faible est l'oral : ici, tout commence par le son. Le contenu vient de vos cartes apprises et de la leçon du jour.</p></div>
+    <div class="seg" role="group" aria-label="Exercice"><button data-lmode="quiz" aria-pressed="${listenMode === "quiz"}">Quiz d'écoute</button><button data-lmode="dict" aria-pressed="${listenMode === "dict"}">Dictée</button></div></section>`;
+  if (!canSpeak()) return head + `<div class="panel empty"><h3>Audio indisponible</h3><p>Ce navigateur ne lit pas le texte à voix haute. Essayez Chrome, Edge ou Safari.</p></div>`;
+  if (listenMode === "quiz") {
+    if (!quiz) newQuiz();
+    if (!quiz) return head + `<div class="panel empty"><h3>Pas encore assez de cartes</h3><p>Il faut au moins 4 cartes. Ouvrez la leçon du jour pour commencer.</p><a class="btn primary" href="#aujourdhui">Leçon du jour</a></div>`;
+    const q = quiz;
+    return head + `<div class="panel">
+      <div class="card-meta"><span>Quiz · ${S.stats.quizOk}/${S.stats.quizN} bonnes réponses au total</span><span class="chip">${esc(DOM[q.it.dom].short)}</span></div>
+      <div class="listen-first"><button class="btn audio big" data-say="${esc(q.it.en)}">${ICON.play}Écouter</button><button class="btn audio" data-say="${esc(q.it.en)}" data-slow="1">${ICON.slow}Lent</button><span class="hint">Choisissez la bonne traduction.</span></div>
+      <div class="choices">${q.opts.map((o, k) => {
+        const cls = q.answered === null ? "" : o.id === q.it.id ? "right" : k === q.answered ? "wrong" : "";
+        return `<button class="choice ${cls}" data-quiz="${k}" ${q.answered !== null ? "disabled" : ""}>${esc(o.fr)}</button>`;
+      }).join("")}</div>
+      ${q.answered !== null ? `<div class="result"><div><b>${esc(q.it.en)}</b>${q.it.ipa ? ` <span class="ipa">/${esc(q.it.ipa)}/</span>` : ""}</div><div class="muted">${esc(q.it.fr)}</div></div>
+      <div class="actions"><button class="btn primary" data-nextquiz="1">Question suivante</button></div>` : ""}
+    </div>`;
+  }
+  if (!dict) newDict();
+  if (!dict) return head + `<div class="panel empty"><h3>Pas encore de phrases</h3><p>Ouvrez la leçon du jour pour commencer.</p><a class="btn primary" href="#aujourdhui">Leçon du jour</a></div>`;
+  const d = dict;
+  const avg = S.stats.dictN ? Math.round(S.stats.dictSum / S.stats.dictN) : 0;
+  return head + `<div class="panel">
+    <div class="card-meta"><span>Dictée · moyenne ${avg} % sur ${S.stats.dictN}</span><span class="chip">${esc(DOM[d.it.dom].short)}</span></div>
+    <div class="listen-first"><button class="btn audio big" data-say="${esc(d.text)}" data-count="1">${ICON.play}Écouter la phrase</button><button class="btn audio" data-say="${esc(d.text)}" data-slow="1" data-count="1">${ICON.slow}Lent</button><span class="hint">Écrivez exactement ce que vous entendez.</span></div>
+    <textarea id="dictInput" placeholder="Tapez la phrase ici…" ${d.result ? "disabled" : ""} spellcheck="false" autocomplete="off" autocapitalize="off">${esc(d.typed || "")}</textarea>
+    ${d.result ? `<div class="result"><div class="score">${d.result.score} % · ${verdict(d.result.score)}</div>${diffHtml(d.result)}<div class="muted">${esc(d.tr)}</div><div class="small muted">En vert les mots trouvés, en rouge ceux à réécouter${d.result.extra.length ? ", barrés les mots en trop" : ""}.</div></div>
+      <div class="actions"><button class="btn primary" data-nextdict="1">Phrase suivante</button>${micBtn(d.text)}</div><div class="mic-out" hidden></div>`
+      : `<div class="actions"><button class="btn primary" data-checkdict="1">Vérifier</button><span class="muted small">Écoutes : ${d.plays}</span></div>`}
+  </div>`;
+}
+
+let pron = null;
+function newPron() {
+  const p = pool();
+  if (!p.length) { pron = null; return; }
+  const it = p[Math.floor(Math.random() * p.length)];
+  const useSentence = it.t === "e" || Math.random() < 0.5;
+  pron = { it, text: it.t === "w" && !useSentence ? it.en : it.t === "w" ? it.ex : it.en };
+}
+function viewPron() {
+  const head = `<section class="view-head"><div><h2>Prononciation</h2><p>Technique du « shadowing » : écoutez, répétez immédiatement en imitant le rythme et l'accent tonique, puis comparez. La reconnaissance vocale vérifie que vous êtes compris.</p></div></section>`;
+  if (!pron) newPron();
+  if (!pron) return head + `<div class="panel empty"><h3>Pas encore de contenu</h3><p>Ouvrez la leçon du jour pour commencer.</p><a class="btn primary" href="#aujourdhui">Leçon du jour</a></div>`;
+  const it = pron.it;
+  const avg = S.stats.pronN ? Math.round(S.stats.pronSum / S.stats.pronN) : 0;
+  const listenNote = canListen() ? "" : `<div class="notice">La reconnaissance vocale n'est pas disponible ici. Écoutez et répétez à voix haute : le shadowing fonctionne aussi sans vérification. Dans Chrome ou Edge, le micro est disponible.</div>`;
+  return head + listenNote + `<div class="panel">
+    <div class="card-meta"><span>Score moyen ${avg} % sur ${S.stats.pronN} essais</span><span class="chip">${esc(DOM[it.dom].short)}</span></div>
+    <div class="term ${pron.text === it.en && it.t === "w" ? "" : "expr"}">${esc(pron.text)}</div>
+    ${pron.text === it.en && it.ipa ? `<div class="ipa">/${esc(it.ipa)}/</div>` : ""}
+    ${it.t === "w" && it.tip ? `<div class="tip"><span class="k">Prononciation</span>${esc(it.tip)}</div>` : ""}
+    ${it.t === "e" && it.fast ? `<div class="fast">À l'oral : ${esc(it.fast)}</div>` : ""}
+    <div class="actions">${audioBtns(pron.text)}${canListen() ? `<button class="btn mic primary" data-mic="${esc(pron.text)}" data-stat="1">${ICON.mic}Parler</button>` : ""}<button class="btn" data-nextpron="1">Suivant</button></div>
+    <div class="mic-out" hidden></div>
+  </div>
+  <div class="panel"><h3>Les pièges classiques pour un francophone</h3>
+    <ul class="muted" style="margin:0;padding-left:18px;display:grid;gap:4px">
+      <li><b>L'accent tonique</b> : en anglais une syllabe est plus forte que les autres (va-li-DA-tion, PRO-to-col). Le français met tout au même niveau.</li>
+      <li><b>Le « th »</b> : langue entre les dents, soufflé (<i>think, throughput</i>) ou vibré (<i>the, this</i>). Jamais « z » ni « s ».</li>
+      <li><b>Le « h » aspiré</b> : on souffle (<i>heat, high</i>), sauf dans <i>hour, honest</i>.</li>
+      <li><b>Les voyelles courtes et longues</b> : <i>ship</i> /ɪ/ ≠ <i>sheep</i> /i/, <i>full</i> /ʊ/ ≠ <i>fool</i> /u/.</li>
+      <li><b>Les mots grammaticaux réduits</b> : <i>to, of, and, can</i> deviennent « tuh, uv, un, kun » à l'oral. C'est souvent ce qui empêche de comprendre.</li>
+    </ul></div>`;
+}
+
+function viewProgress() {
+  const learnedIds = Object.keys(S.srs).filter((id) => ITEMS.has(id));
+  const nW = learnedIds.filter((id) => ITEMS.get(id).t === "w").length;
+  const nE = learnedIds.length - nW;
+  const mastered = learnedIds.filter((id) => S.srs[id].b >= 6).length;
+  const boxes = [0, 0, 0, 0];
+  for (const id of learnedIds) { const b = S.srs[id].b; boxes[b <= 1 ? 0 : b <= 3 ? 1 : b <= 5 ? 2 : 3]++; }
+  const total = learnedIds.length || 1;
+  const bcol = ["var(--bad)", "var(--signal)", "var(--accent)", "var(--good)"];
+  const blab = ["Nouveaux", "En cours", "Solides", "Maîtrisés (30 j +)"];
+  const days = []; for (let i = 27; i >= 0; i--) days.push(addDays(dkey(), -i));
+  const lvl = (n) => (!n ? "" : n < 5 ? "l1" : n < 15 ? "l2" : "l3");
+  const avgD = S.stats.dictN ? Math.round(S.stats.dictSum / S.stats.dictN) + " %" : "–";
+  const avgP = S.stats.pronN ? Math.round(S.stats.pronSum / S.stats.pronN) + " %" : "–";
+  const vocab = learnedIds.length;
+  const engineOpts = `<option value="auto" ${S.prefs.engine === "auto" ? "selected" : ""}>${CL.tts ? "Voix Claude (recommandée)" : "Automatique"}</option><option value="browser" ${S.prefs.engine === "browser" ? "selected" : ""}>Voix du navigateur</option>`;
+  return `<section class="view-head"><div><h2>Progrès &amp; réglages</h2><p>Objectif C2 : la régularité compte plus que la durée. 15 à 20 minutes par jour, tous les jours.</p></div></section>
+    <div class="tiles">
+      <div class="tile"><div class="n">${streak()}</div><div class="l">jours d'affilée</div></div>
+      <div class="tile"><div class="n">${nW}</div><div class="l">mots appris</div></div>
+      <div class="tile"><div class="n">${nE}</div><div class="l">expressions apprises</div></div>
+      <div class="tile"><div class="n">${mastered}</div><div class="l">maîtrisés (30 j +)</div></div>
+      <div class="tile"><div class="n">${avgD}</div><div class="l">score moyen en dictée</div></div>
+      <div class="tile"><div class="n">${avgP}</div><div class="l">score moyen à l'oral</div></div>
+    </div>
+    <div class="panel"><h3>Solidité de la mémoire</h3>
+      <div class="boxes">${boxes.map((n, i) => n ? `<span style="width:${(n / total) * 100}%;background:${bcol[i]}" title="${blab[i]} : ${n}"></span>` : "").join("")}</div>
+      <div class="legend">${boxes.map((n, i) => `<span><i style="background:${bcol[i]}"></i>${blab[i]} · ${n}</span>`).join("")}</div>
+      <h3>Activité des 4 dernières semaines</h3>
+      <div class="heat">${days.map((k) => `<span class="${lvl(S.act[k])}" title="${esc(frDate(k))} : ${S.act[k] || 0} actions"></span>`).join("")}</div>
+    </div>
+    <div class="panel"><h3>La méthode, et pourquoi elle marche</h3>
+      <div class="roadmap">
+        <div><span class="lvl">1</span><span><b>Rappel actif</b> : on écoute, on cherche le sens, puis seulement on affiche la réponse. Se tester ancre mieux que relire (Roediger &amp; Karpicke, 2006).</span></div>
+        <div><span class="lvl">2</span><span><b>Répétition espacée</b> : chaque carte revient à 1, 2, 4, 7, 15, 30 jours et plus, juste avant l'oubli. C'est l'effet le plus solide de la recherche sur la mémoire (Cepeda et al., 2006).</span></div>
+        <div><span class="lvl">3</span><span><b>L'oreille d'abord</b> : le son avant l'écrit, des dictées et des quiz audio. On travaille le décodage de la parole, le vrai frein des apprenants qui lisent bien (Field ; Vandergrift &amp; Goh).</span></div>
+        <div><span class="lvl">4</span><span><b>Shadowing</b> : répéter juste après le modèle en imitant rythme et accent tonique améliore la prononciation et la compréhension orale (Hamada, 2016).</span></div>
+        <div><span class="lvl">5</span><span><b>Mots en contexte et blocs lexicaux</b> : chaque mot vient avec une phrase de votre métier, et les expressions s'apprennent en entier, comme les natifs les disent (Nation ; approche lexicale de Lewis).</span></div>
+        <div><span class="lvl">6</span><span><b>Entrelacement</b> : les révisions mélangent domaines et types de cartes, ce qui oblige le cerveau à discriminer et retient mieux que des séries par thème (Rohrer, 2012).</span></div>
+        <div><span class="lvl">7</span><span><b>Petites doses quotidiennes</b> : 20 nouvelles cartes et 15 à 20 minutes par jour valent mieux qu'une longue séance par semaine. Complétez avec de l'écoute « compréhensible » : podcasts et vidéos de votre métier, un peu au-dessus de votre niveau (Krashen).</span></div>
+      </div></div>
+    <div class="panel"><h3>Feuille de route B2 → C2</h3>
+      <div class="roadmap">
+        <div><span class="lvl ${vocab < 400 ? "cur" : ""}">B2</span><span>Vous comprenez à l'écrit. Priorité : entraîner l'oreille aux formes réduites et au débit naturel (dictées quotidiennes, vitesse normale dès que possible).</span></div>
+        <div><span class="lvl ${vocab >= 400 && vocab < 1200 ? "cur" : ""}">C1</span><span>Environ 400 cartes solides dans votre métier : réunions, audits et appels sans traduire mentalement. Ajoutez podcasts métier et vidéos en anglais sans sous-titres.</span></div>
+        <div><span class="lvl ${vocab >= 1200 ? "cur" : ""}">C2</span><span>Plus de 1 200 cartes et les nuances : registres, idiomes, humour, accents variés (US, UK, Inde, Irlande). Les cartes générées par Claude prennent le relais quand la banque est épuisée.</span></div>
+      </div></div>
+    <div class="panel settings"><h3>Réglages</h3>
+      <div class="row"><span class="lbl">Domaines de la leçon du jour</span>
+        <div class="checks">${Object.entries(DOM).map(([k, d]) => `<label><input type="checkbox" data-dom="${k}" ${S.prefs.domains.includes(k) ? "checked" : ""}>${esc(d.label)}</label>`).join("")}</div>
+        <span class="small muted">Les changements s'appliquent aux prochaines cartes ajoutées.</span></div>
+      <div class="row"><label class="lbl" for="optEngine">Voix</label><select id="optEngine">${engineOpts}</select></div>
+      ${S.prefs.engine === "browser" || !CL.tts ? `<div class="row"><label class="lbl" for="optVoice">Voix du navigateur</label><select id="optVoice"><option value="">Automatique (${S.prefs.accent === "en-GB" ? "britannique" : "américaine"})</option>${voices.map((v) => `<option value="${esc(v.name)}" ${S.prefs.voiceName === v.name ? "selected" : ""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}</select></div>` : ""}
+      <div class="row"><label class="lbl" for="optAccent">Accent pour la voix du navigateur et la reconnaissance</label><select id="optAccent"><option value="en-US" ${S.prefs.accent === "en-US" ? "selected" : ""}>Américain (en-US)</option><option value="en-GB" ${S.prefs.accent === "en-GB" ? "selected" : ""}>Britannique (en-GB)</option></select></div>
+      <div class="row"><label class="lbl" for="optRate">Vitesse normale : ${Number(S.prefs.rate).toFixed(2)}×</label><input type="range" id="optRate" min="0.7" max="1.3" step="0.05" value="${S.prefs.rate}" style="accent-color:var(--accent)"></div>
+      <div class="row"><span class="lbl">Sauvegarde</span>
+        <span class="small muted">${CL.progRef ? "Votre progression est enregistrée sur votre compte Claude et dans ce navigateur." : "Votre progression est enregistrée dans ce navigateur. Copiez une sauvegarde de temps en temps."}</span>
+        <div class="actions"><button class="btn" id="btnExport">Copier la sauvegarde</button><button class="btn" id="btnImportShow">Restaurer une sauvegarde</button></div>
+        <div id="importBox" hidden style="display:grid;gap:8px"><textarea id="importText" placeholder="Collez ici le texte de sauvegarde"></textarea><div class="actions"><button class="btn primary" id="btnImport">Restaurer</button></div></div>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const h = (location.hash || "#aujourdhui").slice(1);
+  VIEW = ["aujourdhui", "revision", "ecoute", "prononciation", "progres"].includes(h) ? h : "aujourdhui";
+  document.querySelectorAll("nav.tabs a").forEach((a) => a.toggleAttribute("aria-current", a.dataset.v === VIEW) || a.dataset.v === VIEW && a.setAttribute("aria-current", "page"));
+  document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.dataset.v === VIEW) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  const html = VIEW === "revision" ? viewReview() : VIEW === "ecoute" ? viewListen() : VIEW === "prononciation" ? viewPron() : VIEW === "progres" ? viewProgress() : viewToday();
+  const typed = $("#dictInput") ? $("#dictInput").value : null;
+  if (dict && typed !== null && !dict.result) dict.typed = typed;
+  app.innerHTML = html;
+  updateMeters();
+}
+window.addEventListener("hashchange", () => { revShown = false; render(); window.scrollTo(0, 0); });
+
+/* ---------- Génération avec Claude ---------- */
+async function generate(t, btn) {
+  if (!CL.sample) return;
+  const status = $("#genStatus");
+  btn.disabled = true; if (status) status.innerHTML = '<span class="spin"></span> Claude prépare vos cartes…';
+  const doms = S.prefs.domains.length ? S.prefs.domains : Object.keys(DOM);
+  const existing = [...ITEMS.values()].filter((x) => x.t === t).map((x) => x.en).slice(-300).join("; ");
+  const domList = doms.map((d) => `${d} (${DOM[d].label})`).join(", ");
+  const spec = t === "w"
+    ? `Return a JSON array of exactly 10 objects with keys: "dom" (one of: ${doms.join(", ")}), "en" (English word or short term), "ipa" (General American IPA, no slashes), "fr" (French translation), "ex" (natural English example sentence from the workplace or travel), "exFr" (French translation of the example), "tip" (one short pronunciation tip in French for a French speaker, or empty string).`
+    : `Return a JSON array of exactly 10 objects with keys: "dom" (one of: ${doms.join(", ")}), "en" (a common spoken English expression or full sentence used by native speakers), "fr" (natural French equivalent), "note" (one short usage note in French), "fast" (how it sounds in fast natural speech, syllables joined by hyphens with stressed syllables in CAPS).`;
+  const prompt = `You create flashcards for a French native speaker, a pharmaceutical CQV/CSV validation engineer, currently B2 in English and aiming for C2. Domains: ${domList}. "pharma" = GMP/quality assurance, "cqv" = commissioning, qualification and computer system validation, "eng" = industrial engineering, "pro" = general professional English, "travel" = travel. Spread the 10 items across the domains. Choose useful C1-C2 level ${t === "w" ? "vocabulary" : "expressions"} that a native colleague would actually use. Do not repeat any of these: ${existing}.\n\n${spec}\nReply with only the JSON array.`;
+  try {
+    const arr = await CL.sample.json(prompt, { modelTier: "default" });
+    if (!Array.isArray(arr)) throw new Error("format");
+    let n = 0;
+    for (const o of arr) {
+      if (!o || typeof o.en !== "string") continue;
+      const dom = DOM[o.dom] ? o.dom : doms[0];
+      const it = t === "w"
+        ? { id: `w|${dom}|${o.en.trim()}`, t, dom, en: o.en.trim(), ipa: String(o.ipa || "").replace(/^\/|\/$/g, ""), fr: String(o.fr || ""), ex: String(o.ex || ""), exFr: String(o.exFr || ""), tip: String(o.tip || ""), gen: 1 }
+        : { id: `e|${dom}|${o.en.trim()}`, t, dom, en: o.en.trim(), fr: String(o.fr || ""), note: String(o.note || ""), fast: String(o.fast || ""), gen: 1 };
+      if (addItem(it, false)) { CUSTOM.push(it); n++; }
+    }
+    saveCustom();
+    toast(n ? `${n} nouvelles cartes ajoutées.` : "Aucune nouvelle carte : réessayez.");
+    render();
+  } catch (e) {
+    btn.disabled = false;
+    if (status) status.textContent = e && e.code === "rate_limited" ? "Trop de demandes, réessayez dans quelques minutes." : e && e.code === "not_granted" ? "L'accès à Claude n'est pas autorisé pour cette page." : "La génération a échoué, réessayez.";
+  }
+}
+
+/* ---------- Événements ---------- */
+app.addEventListener("click", (ev) => {
+  const b = ev.target.closest("button"); if (!b) return;
+  const ds = b.dataset;
+  if (ds.say) {
+    speak(ds.say, !!ds.slow, b);
+    if (ds.count && dict) { dict.plays++; const s = app.querySelector(".actions .muted.small"); if (s && !dict.result) s.textContent = `Écoutes : ${dict.plays}`; }
+    const card = b.closest(".card[data-id]");
+    if (card && S.prefs.audioFirst && VIEW === "aujourdhui") { /* rien : l'utilisateur choisit quand afficher */ }
+    return;
+  }
+  if (ds.mic) {
+    const holder = b.closest(".card, .panel");
+    const out = holder ? holder.querySelector(".mic-out") : null;
+    const target = ds.mic, stat = !!ds.stat;
+    if (out) { out.hidden = false; out.innerHTML = `<div class="result"><span class="partial">Parlez maintenant… (cliquez à nouveau pour arrêter)</span></div>`; }
+    startListening(b, (p) => { if (out && p) out.innerHTML = `<div class="result"><span class="partial">${esc(p)}</span></div>`; }, (text) => {
+      if (!out) return;
+      if (!text) { out.innerHTML = `<div class="result"><span class="muted">Rien n'a été entendu. Rapprochez-vous du micro et réessayez.</span></div>`; return; }
+      const r = compare(target, text);
+      out.innerHTML = `<div class="result"><div class="score">${r.score} % · ${verdict(r.score)}</div>${diffHtml(r)}<div class="small muted">Compris : « ${esc(text)} »</div></div>`;
+      S.stats.pronN++; S.stats.pronSum += r.score; bump(); save(); updateMeters();
+      void stat;
+    });
+    return;
+  }
+  if (ds.reveal) { revealed.add(ds.reveal); render(); return; }
+  if (ds.learn) { learn(ds.learn, !isLearned(ds.learn)); revealed.add(ds.learn); render(); return; }
+  if (ds.learnall) { const day = ensureToday(); day[ds.learnall].forEach((id) => learn(id, true)); render(); toast("Cartes envoyées en révision pour demain."); return; }
+  if (ds.ttab) { todayTab = ds.ttab; render(); return; }
+  if (ds.gen) { generate(ds.gen, b); return; }
+  if (ds.showans) { revShown = true; render(); return; }
+  if (ds.grade) {
+    const id = revQueue[0]; const g = Number(ds.grade);
+    grade(id, g); revQueue.shift(); if (g === 0) revQueue.push(id);
+    revShown = false; render();
+    const nb = $("#revPlay"); if (nb && revQueue.length) nb.focus();
+    return;
+  }
+  if (ds.lmode) { listenMode = ds.lmode; render(); return; }
+  if (ds.quiz) {
+    if (!quiz || quiz.answered !== null) return;
+    quiz.answered = Number(ds.quiz);
+    const ok = quiz.opts[quiz.answered].id === quiz.it.id;
+    S.stats.quizN++; if (ok) S.stats.quizOk++; bump(); save(); render();
+    return;
+  }
+  if (ds.nextquiz) { newQuiz(); render(); return; }
+  if (ds.checkdict) {
+    const v = $("#dictInput").value.trim();
+    if (!v) { toast("Écrivez d'abord ce que vous avez entendu."); return; }
+    dict.typed = v; dict.result = compare(dict.text, v);
+    S.stats.dictN++; S.stats.dictSum += dict.result.score; bump(); save(); render();
+    return;
+  }
+  if (ds.nextdict) { newDict(); render(); const i = $("#dictInput"); if (i) i.focus(); return; }
+  if (ds.nextpron) { newPron(); render(); return; }
+  if (b.id === "btnExport") {
+    const txt = JSON.stringify({ state: S, custom: CUSTOM });
+    const done = () => toast("Sauvegarde copiée. Collez-la dans une note pour la garder.");
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => showExport(txt));
+    else showExport(txt);
+    return;
+  }
+  if (b.id === "btnImportShow") { $("#importBox").hidden = false; return; }
+  if (b.id === "btnImport") {
+    try {
+      const o = JSON.parse($("#importText").value);
+      if (!o.state) throw 0;
+      S = mergeState(o.state);
+      (o.custom || []).forEach((c) => { const n = normalizeCustom(c); if (n && addItem(n, false)) CUSTOM.push(n); });
+      save(); saveCustom(); revQueue = null; toast("Sauvegarde restaurée."); render();
+    } catch (e) { toast("Ce texte n'est pas une sauvegarde valide."); }
+    return;
+  }
+});
+function showExport(txt) { $("#importBox").hidden = false; const t = $("#importText"); t.value = txt; t.select(); toast("Copiez le texte sélectionné."); }
+app.addEventListener("change", (ev) => {
+  const el = ev.target;
+  if (el.id === "optAudioFirst") { S.prefs.audioFirst = el.checked; save(); render(); }
+  else if (el.dataset.dom) {
+    const set = new Set(S.prefs.domains); el.checked ? set.add(el.dataset.dom) : set.delete(el.dataset.dom);
+    if (!set.size) { el.checked = true; toast("Gardez au moins un domaine."); return; }
+    S.prefs.domains = Object.keys(DOM).filter((k) => set.has(k)); save();
+  }
+  else if (el.id === "optEngine") { S.prefs.engine = el.value; save(); render(); }
+  else if (el.id === "optVoice") { S.prefs.voiceName = el.value; save(); }
+  else if (el.id === "optAccent") { S.prefs.accent = el.value; S.prefs.voiceName = ""; save(); render(); }
+  else if (el.id === "optRate") { S.prefs.rate = Number(el.value); save(); render(); }
+});
+app.addEventListener("keydown", (ev) => {
+  if (ev.target.id === "dictInput" && ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); const b = app.querySelector("[data-checkdict]"); if (b) b.click(); }
+});
+
+render();
+initClaude();
+})();
+</script>
+
+</body>
+</html>
